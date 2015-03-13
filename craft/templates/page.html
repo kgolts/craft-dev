@@ -1,0 +1,53 @@
+{# Define list of categories #}
+{% set allCategories = craft.categories.group('pageCategories').find() %}
+
+{#
+    - craft automatically creates a 'category' variable if it detects you are on a category template
+    - we are just checking whether that category variable exists or not
+    - depending on its existence, we set our list of entries
+#}
+{% if category is defined %}
+    {% set currentCategory = category.slug %}
+    {% set entries = craft.entries.section('news').relatedTo(category).find() %}
+{% else %}
+    {% set currentCategory = "all" %}
+    {% set entries = craft.entries.section('news').find() %}
+{% endif %}
+
+
+{# Build page content #}
+
+{% extends "_layout" %}
+
+{% block content %}
+
+    {# Build categories list #}
+    {% if allCategories | length %}
+        <h2>Categories</h2>
+            <ul>
+                <li{% if currentCategory == "all" %} class="current"{% endif %}>
+                    <a href="{{ siteUrl }}news">all categories</a>
+                </li>
+                {# using nav tag to cater for nested categories #}
+                {% nav category in allCategories %}
+                    
+                    {# get number of entries in each category #}
+                    {% set entriesNbr = craft.entries.section('news').relatedTo(category).total() %}
+
+                    <li{% if currentCategory == category.slug %} class="current"{% endif %}>
+
+                        <a href="{{ category.url }}">{{ category.title }} ({{ entriesNbr }})</a>
+                        {% ifchildren %}
+                            <ul>
+                                {% children %}
+                            </ul>
+                        {% endifchildren %}
+
+                    </li>
+
+                {% endnav %}
+
+            </ul>
+    {% endif %}
+
+{% endblock %}
